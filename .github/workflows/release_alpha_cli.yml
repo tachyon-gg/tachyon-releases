@@ -70,6 +70,7 @@ jobs:
         with:
           tag_name: alpha-${{ steps.version.outputs.version }}
           name: Alpha Build ${{ steps.version.outputs.version }}
+          token: ${{ secrets.TACHYON_RELEASE }}
           files: |
             artifact-ubuntu/**
             artifact-macos/**
