@@ -24,9 +24,9 @@ jobs:
             });
             const successful = runs.data.workflow_runs.find(run => run.conclusion === 'success');
             if (!successful) throw new Error('No successful build_alpha_gui run found');
-            core.setOutput('run_id', successful.id);
+            core.setOutput('run_id', String(successful.id));
 
-      - name: Download GUI artifact
+      - name: Download GUI artifact (Ubuntu)
         uses: actions/download-artifact@v4
         with:
           name: tachyon-gui-ubuntu-latest-alpha
