@@ -65,6 +65,24 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Zip Ubuntu artifact
+        run: |
+          cd artifact-ubuntu
+          zip -r ../tachyon-cli-ubuntu-${{ steps.version.outputs.version }}-alpha.zip .
+          cd ..
+
+      - name: Zip macOS artifact
+        run: |
+          cd artifact-macos
+          zip -r ../tachyon-cli-macos-${{ steps.version.outputs.version }}-alpha.zip .
+          cd ..
+
+      - name: Zip Windows artifact
+        run: |
+          cd artifact-windows
+          zip -r ../tachyon-cli-windows-${{ steps.version.outputs.version }}-alpha.zip .
+          cd ..
+
       - name: Release to public repo
         uses: softprops/action-gh-release@v2
         with:
@@ -72,8 +90,8 @@ jobs:
           name: Alpha Build ${{ steps.version.outputs.version }}
           token: ${{ secrets.TACHYON_RELEASE }}
           files: |
-            artifact-ubuntu/**
-            artifact-macos/**
-            artifact-windows/**
+            tachyon-cli-ubuntu-${{ steps.version.outputs.version }}-alpha.zip
+            tachyon-cli-macos-${{ steps.version.outputs.version }}-alpha.zip
+            tachyon-cli-windows-${{ steps.version.outputs.version }}-alpha.zip
           draft: false
           prerelease: true
