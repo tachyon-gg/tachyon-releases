@@ -65,23 +65,18 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Zip Ubuntu artifact
+      - name: Copy Ubuntu artifacts (.deb and .rpm)
         run: |
-          cd artifact-ubuntu
-          zip -r ../tachyon-cli-ubuntu-${{ steps.version.outputs.version }}-alpha.zip .
-          cd ..
+          mkdir -p release-artifacts
+          find artifact-ubuntu -type f \( -name "*.deb" -o -name "*.rpm" \) -exec cp {} release-artifacts/ \;
 
-      - name: Zip macOS artifact
+      - name: Copy macOS artifacts (.dmg)
         run: |
-          cd artifact-macos
-          zip -r ../tachyon-cli-macos-${{ steps.version.outputs.version }}-alpha.zip .
-          cd ..
+          find artifact-macos -type f -name "*.dmg" -exec cp {} release-artifacts/ \;
 
-      - name: Zip Windows artifact
+      - name: Copy Windows artifacts (.msi)
         run: |
-          cd artifact-windows
-          zip -r ../tachyon-cli-windows-${{ steps.version.outputs.version }}-alpha.zip .
-          cd ..
+          find artifact-windows -type f -name "*.msi" -exec cp {} release-artifacts/ \;
 
       - name: Release to public repo
         uses: softprops/action-gh-release@v2
@@ -89,9 +84,6 @@ jobs:
           tag_name: alpha-${{ steps.version.outputs.version }}
           name: Alpha Build ${{ steps.version.outputs.version }}
           token: ${{ secrets.TACHYON_RELEASE }}
-          files: |
-            tachyon-cli-ubuntu-${{ steps.version.outputs.version }}-alpha.zip
-            tachyon-cli-macos-${{ steps.version.outputs.version }}-alpha.zip
-            tachyon-cli-windows-${{ steps.version.outputs.version }}-alpha.zip
+          files: release-artifacts/*
           draft: false
           prerelease: true
