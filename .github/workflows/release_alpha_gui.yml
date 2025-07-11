@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: alpha-${{ github.event.inputs.version }}
-          name: Alpha Build ${{ github.event.inputs.version }}
+          name: Alpha v${{ github.event.inputs.version }}
           token: ${{ secrets.TACHYON_GG }}
           files: release-artifacts/*
           draft: false

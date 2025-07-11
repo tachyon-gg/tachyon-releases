@@ -78,21 +78,21 @@ jobs:
       - name: Copy Ubuntu artifacts (.deb and .rpm)
         run: |
           mkdir -p release-artifacts
-          find artifact-ubuntu -type f \( -name "*.deb" -o -name "*.rpm" \) -exec cp {} release-artifacts/ \;
+          find artifact-ubuntu -type f -name "tachyon*" -exec cp {} release-artifacts/ \;
 
       - name: Copy macOS artifacts (.dmg)
         run: |
-          find artifact-macos -type f -name "*.dmg" -exec cp {} release-artifacts/ \;
+          find artifact-macos -type f -name "*tachyon*" -exec cp {} release-artifacts/ \;
 
       - name: Copy Windows artifacts (.msi)
         run: |
-          find artifact-windows -type f -name "*.msi" -exec cp {} release-artifacts/ \;
+          find artifact-windows -type f -name "tachyon*" -exec cp {} release-artifacts/ \;
 
       - name: Release to public repo
         uses: softprops/action-gh-release@v2
         with:
           tag_name: alpha-${{ github.event.inputs.version }}
-          name: Alpha Build ${{ github.event.inputs.version }}
+          name: Alpha v${{ github.event.inputs.version }}
           token: ${{ secrets.TACHYON_GG }}
           files: release-artifacts/*
           draft: false
