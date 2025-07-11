@@ -19,7 +19,7 @@ jobs:
         with:
           github-token: ${{ secrets.TACHYON_CLIENT }}
           script: |
-            const version = core.getInput('version');
+            const version = github.event.inputs.version;
             if (!version) throw new Error('No version input provided');
             const tag = `gui-alpha-${version}`;
             // Find workflow runs triggered by the tag (version)
