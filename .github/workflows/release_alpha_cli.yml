@@ -26,7 +26,7 @@ jobs:
             const runs = await github.rest.actions.listWorkflowRuns({
               owner: 'tachyon-gg',
               repo: 'tachyon-client',
-              workflow_id: 'build_alpha_cli.yml',
+              workflow_id: 'build_cli.yml',
               status: 'completed',
               per_page: 100
             });
