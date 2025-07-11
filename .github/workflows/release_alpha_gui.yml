@@ -17,9 +17,9 @@ jobs:
         id: find_run
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.TACHYON_CLIENT }}
+          github-token: ${{ secrets.TACHYON_GG }}
           script: |
-            const version = github.event.inputs.version;
+            const version = "${{ github.event.inputs.version }}";
             if (!version) throw new Error('No version input provided');
             const tag = `gui-alpha-${version}`;
             // Find workflow runs triggered by the tag (version)
