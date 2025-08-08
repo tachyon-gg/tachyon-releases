@@ -1,0 +1,185 @@
+name: Release GUI Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag for this release (gui-{branch}-{version})'
+        required: true
+        type: string
+
+jobs:
+  release-gui:
+    name: Release GUI Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract version and branch from tag
+        id: extract_info
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
+          # Remove 'gui-' prefix and split on '-'
+          VERSION_PART="${TAG#gui-}"
+          # Extract branch (everything before the last dash)
+          BRANCH="${VERSION_PART%-*}"
+          # Extract version (everything after the last dash)
+          VERSION="${VERSION_PART##*-}"
+          
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted branch: $BRANCH"
+          echo "Extracted version: $VERSION"
+
+      - name: Find run for tag
+        id: find_run
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.TACHYON_GG }}
+          script: |
+            const tag = "${{ github.event.inputs.tag }}";
+            // Find workflow runs triggered by the tag (version)
+            const runs = await github.rest.actions.listWorkflowRuns({
+              owner: 'tachyon-gg',
+              repo: 'tachyon-client',
+              workflow_id: 'build_gui.yml',
+              status: 'completed',
+              per_page: 100
+            });
+            let foundRun = null;
+            for (const run of runs.data.workflow_runs) {
+              if (run.event === 'push' && run.head_branch === tag) {
+                foundRun = run;
+                break;
+              }
+              if (run.event === 'create' && run.head_branch === tag) {
+                foundRun = run;
+                break;
+              }
+              if (run.event === 'push' && run.ref === `refs/tags/${tag}`) {
+                foundRun = run;
+                break;
+              }
+            }
+            if (!foundRun) throw new Error(`No workflow run found for tag ${tag}`);
+            core.setOutput('run_id', String(foundRun.id));
+
+      - name: Download GUI artifact (Ubuntu)
+        uses: actions/download-artifact@v4
+        with:
+          name: tachyon-${{ github.event.inputs.tag }}-ubuntu-latest
+          path: ./artifact-ubuntu
+          repository: tachyon-gg/tachyon-client
+          run-id: ${{ steps.find_run.outputs.run_id }}
+          github-token: ${{ secrets.TACHYON_GG }}
+
+      - name: Download GUI artifact (macOS)
+        uses: actions/download-artifact@v4
+        with:
+          name: tachyon-${{ github.event.inputs.tag }}-macos-latest
+          path: ./artifact-macos
+          repository: tachyon-gg/tachyon-client
+          run-id: ${{ steps.find_run.outputs.run_id }}
+          github-token: ${{ secrets.TACHYON_GG }}
+
+      - name: Download GUI artifact (Windows)
+        uses: actions/download-artifact@v4
+        with:
+          name: tachyon-${{ github.event.inputs.tag }}-windows-latest
+          path: ./artifact-windows
+          repository: tachyon-gg/tachyon-client
+          run-id: ${{ steps.find_run.outputs.run_id }}
+          github-token: ${{ secrets.TACHYON_GG }}
+
+      - name: Copy Linux artifacts (.deb)
+        run: |
+          mkdir -p release-artifacts
+          find artifact-ubuntu -type f \( -name "*.deb" -o -name "*.deb.sig" \) -exec cp {} release-artifacts/ \;
+
+      - name: Copy macOS artifacts (.dmg)
+        run: |
+          find artifact-macos -type f \( -name "*.dmg" -o -name "*.dmg.sig" \) -exec cp {} release-artifacts/ \;
+
+      - name: Copy Windows artifacts (.msi)
+        run: |
+          find artifact-windows -type f \( -name "*.msi" -o -name "*.msi.sig" \) -exec cp {} release-artifacts/ \;
+
+      - name: Create manifest.json
+        run: |
+          # Get current date in RFC3339 format
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          
+          # Find artifact files
+          DEB_FILE=$(find release-artifacts -name "*.deb" | head -1)
+          MSI_FILE=$(find release-artifacts -name "*.msi" | head -1)
+          DMG_FILE=$(find release-artifacts -name "*.dmg" | head -1)
+          
+          # Start building platforms JSON
+          PLATFORMS_JSON=""
+          PLATFORM_COUNT=0
+          
+          # Check Linux platform
+          if [ -n "$DEB_FILE" ] && [ -f "$DEB_FILE" ] && [ -f "${DEB_FILE}.sig" ]; then
+            DEB_FILENAME=$(basename "$DEB_FILE")
+            LINUX_SIGNATURE=$(cat "${DEB_FILE}.sig")
+            if [ $PLATFORM_COUNT -gt 0 ]; then
+              PLATFORMS_JSON="$PLATFORMS_JSON,"
+            fi
+            PLATFORMS_JSON="$PLATFORMS_JSON
+            \"linux-x86_64\": {
+              \"signature\": \"$LINUX_SIGNATURE\",
+              \"url\": \"https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.branch }}/$DEB_FILENAME\"
+            }"
+            PLATFORM_COUNT=$((PLATFORM_COUNT + 1))
+          fi
+          
+          # Check Windows platform
+          if [ -n "$MSI_FILE" ] && [ -f "$MSI_FILE" ] && [ -f "${MSI_FILE}.sig" ]; then
+            MSI_FILENAME=$(basename "$MSI_FILE")
+            WINDOWS_SIGNATURE=$(cat "${MSI_FILE}.sig")
+            if [ $PLATFORM_COUNT -gt 0 ]; then
+              PLATFORMS_JSON="$PLATFORMS_JSON,"
+            fi
+            PLATFORMS_JSON="$PLATFORMS_JSON
+            \"windows-x86_64\": {
+              \"signature\": \"$WINDOWS_SIGNATURE\",
+              \"url\": \"https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.branch }}/$MSI_FILENAME\"
+            }"
+            PLATFORM_COUNT=$((PLATFORM_COUNT + 1))
+          fi
+          
+          # Check macOS platform
+          if [ -n "$DMG_FILE" ] && [ -f "$DMG_FILE" ] && [ -f "${DMG_FILE}.sig" ]; then
+            DMG_FILENAME=$(basename "$DMG_FILE")
+            MACOS_SIGNATURE=$(cat "${DMG_FILE}.sig")
+            if [ $PLATFORM_COUNT -gt 0 ]; then
+              PLATFORMS_JSON="$PLATFORMS_JSON,"
+            fi
+            PLATFORMS_JSON="$PLATFORMS_JSON
+            \"darwin-aarch64\": {
+              \"signature\": \"$MACOS_SIGNATURE\",
+              \"url\": \"https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.branch }}/$DMG_FILENAME\"
+            }"
+            PLATFORM_COUNT=$((PLATFORM_COUNT + 1))
+          fi
+          
+          # Create manifest.json
+          cat > release-artifacts/manifest.json << EOF
+          {
+            "version": "${{ steps.extract_info.outputs.version }}",
+            "pub_date": "$PUB_DATE",
+            "platforms": {$PLATFORMS_JSON
+            }
+          }
+          EOF
+          
+          echo "Generated manifest.json:"
+          cat release-artifacts/manifest.json
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.extract_info.outputs.branch }}
+          name: ${{ github.event.inputs.tag }}
+          token: ${{ secrets.TACHYON_GG }}
+          files: release-artifacts/*
+          draft: false
+          prerelease: ${{ steps.extract_info.outputs.branch != 'prod' }}
