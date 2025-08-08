@@ -112,6 +112,7 @@ jobs:
 
       - name: Create manifest.json
         run: |
+          mkdir -p release-manifest
           # Get current date in RFC3339 format
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           
@@ -179,7 +180,7 @@ jobs:
           fi
           
           # Create manifest.json
-          cat > release-artifacts/manifest.json << EOF
+          cat > release-manifest/manifest.json << EOF
           {
             "version": "${{ steps.extract_info.outputs.version }}",
             "pub_date": "$PUB_DATE",
@@ -189,14 +190,25 @@ jobs:
           EOF
           
           echo "Generated manifest.json:"
-          cat release-artifacts/manifest.json
+          cat release-manifest/manifest.json
 
-      - name: Create GitHub release
+      - name: Release Build
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.extract_info.outputs.branch }}
+          tag_name: v${{ steps.extract_info.outputs.version }}${{ steps.extract_info.outputs.branch != 'prod' && format('-{0}', steps.extract_info.outputs.branch) || '' }}
           name: ${{ github.event.inputs.tag }}
           token: ${{ secrets.TACHYON_GG }}
           files: release-artifacts/*
           draft: false
           prerelease: ${{ steps.extract_info.outputs.branch != 'prod' }}
+
+      - name: Release Manifest
+        uses: svenstaro/upload-release-action@v2
+        with:
+          tag: ${{ steps.extract_info.outputs.branch }}
+          release_name: "Manifest: ${{ github.event.inputs.tag }}"
+          repo_token: ${{ secrets.TACHYON_GG }}
+          file: release-manifest/manifest.json
+          draft: false
+          prerelease: ${{ steps.extract_info.outputs.branch != 'prod' }}
+          overwrite: true
