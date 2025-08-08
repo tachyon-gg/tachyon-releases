@@ -83,7 +83,7 @@ jobs:
       - name: Download GUI artifact (Windows)
         uses: actions/download-artifact@v4
         with:
-          name: tachyon--${{ github.event.inputs.tag }}-windows-latest
+          name: tachyon-${{ github.event.inputs.tag }}-windows-latest
           path: ./artifact-windows
           repository: tachyon-gg/tachyon-client
           run-id: ${{ steps.find_run.outputs.run_id }}
