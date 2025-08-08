@@ -109,28 +109,56 @@ jobs:
           
           # Find artifact files
           DEB_FILE=$(find release-artifacts -name "*.deb" | head -1)
-          DEB_FILENAME=$(basename "$DEB_FILE")
           MSI_FILE=$(find release-artifacts -name "*.msi" | head -1)
-          MSI_FILENAME=$(basename "$MSI_FILE")
           DMG_FILE=$(find release-artifacts -name "*.dmg" | head -1)
-          DMG_FILENAME=$(basename "$DMG_FILE")
           
-          # Read signature from .deb.sig file (if it exists)
-          LINUX_SIGNATURE=""
-          if [ -f "${DEB_FILE}.sig" ]; then
+          # Start building platforms JSON
+          PLATFORMS_JSON=""
+          PLATFORM_COUNT=0
+          
+          # Check Linux platform
+          if [ -n "$DEB_FILE" ] && [ -f "$DEB_FILE" ] && [ -f "${DEB_FILE}.sig" ]; then
+            DEB_FILENAME=$(basename "$DEB_FILE")
             LINUX_SIGNATURE=$(cat "${DEB_FILE}.sig")
+            if [ $PLATFORM_COUNT -gt 0 ]; then
+              PLATFORMS_JSON="$PLATFORMS_JSON,"
+            fi
+            PLATFORMS_JSON="$PLATFORMS_JSON
+            \"linux-x86_64\": {
+              \"signature\": \"$LINUX_SIGNATURE\",
+              \"url\": \"https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.branch }}/$DEB_FILENAME\"
+            }"
+            PLATFORM_COUNT=$((PLATFORM_COUNT + 1))
           fi
           
-          # Read signature from .msi.sig file (if it exists)
-          WINDOWS_SIGNATURE=""
-          if [ -f "${MSI_FILE}.sig" ]; then
+          # Check Windows platform
+          if [ -n "$MSI_FILE" ] && [ -f "$MSI_FILE" ] && [ -f "${MSI_FILE}.sig" ]; then
+            MSI_FILENAME=$(basename "$MSI_FILE")
             WINDOWS_SIGNATURE=$(cat "${MSI_FILE}.sig")
+            if [ $PLATFORM_COUNT -gt 0 ]; then
+              PLATFORMS_JSON="$PLATFORMS_JSON,"
+            fi
+            PLATFORMS_JSON="$PLATFORMS_JSON
+            \"windows-x86_64\": {
+              \"signature\": \"$WINDOWS_SIGNATURE\",
+              \"url\": \"https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.branch }}/$MSI_FILENAME\"
+            }"
+            PLATFORM_COUNT=$((PLATFORM_COUNT + 1))
           fi
           
-          # Read signature from .dmg.sig file (if it exists)
-          MACOS_SIGNATURE=""
-          if [ -f "${DMG_FILE}.sig" ]; then
+          # Check macOS platform
+          if [ -n "$DMG_FILE" ] && [ -f "$DMG_FILE" ] && [ -f "${DMG_FILE}.sig" ]; then
+            DMG_FILENAME=$(basename "$DMG_FILE")
             MACOS_SIGNATURE=$(cat "${DMG_FILE}.sig")
+            if [ $PLATFORM_COUNT -gt 0 ]; then
+              PLATFORMS_JSON="$PLATFORMS_JSON,"
+            fi
+            PLATFORMS_JSON="$PLATFORMS_JSON
+            \"darwin-aarch64\": {
+              \"signature\": \"$MACOS_SIGNATURE\",
+              \"url\": \"https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.branch }}/$DMG_FILENAME\"
+            }"
+            PLATFORM_COUNT=$((PLATFORM_COUNT + 1))
           fi
           
           # Create manifest.json
@@ -138,19 +166,7 @@ jobs:
           {
             "version": "${{ steps.extract_info.outputs.version }}",
             "pub_date": "$PUB_DATE",
-            "platforms": {
-              "linux-x86_64": {
-                "signature": "$LINUX_SIGNATURE",
-                "url": "https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.branch }}/$DEB_FILENAME"
-              },
-              "windows-x86_64": {
-                "signature": "$WINDOWS_SIGNATURE",
-                "url": "https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.branch }}/$MSI_FILENAME"
-              },
-              "darwin-aarch64": {
-                "signature": "$MACOS_SIGNATURE",
-                "url": "https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.branch }}/$DMG_FILENAME"
-              }
+            "platforms": {$PLATFORMS_JSON
             }
           }
           EOF
