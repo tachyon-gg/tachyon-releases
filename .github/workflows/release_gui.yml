@@ -137,7 +137,7 @@ jobs:
               PLATFORMS_JSON="$PLATFORMS_JSON
               \"linux-x86_64\": {
                 \"signature\": \"$LINUX_SIGNATURE\",
-                \"url\": \"https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.branch }}/$DEB_FILENAME\"
+                \"url\": \"https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.version }}-${{ steps.extract_info.outputs.branch }}/$DEB_FILENAME\"
               }"
               PLATFORM_COUNT=$((PLATFORM_COUNT + 1))
             fi
@@ -155,7 +155,7 @@ jobs:
               PLATFORMS_JSON="$PLATFORMS_JSON
               \"windows-x86_64\": {
                 \"signature\": \"$WINDOWS_SIGNATURE\",
-                \"url\": \"https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.branch }}/$MSI_FILENAME\"
+                \"url\": \"https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.version }}-${{ steps.extract_info.outputs.branch }}/$MSI_FILENAME\"
               }"
               PLATFORM_COUNT=$((PLATFORM_COUNT + 1))
             fi
@@ -173,7 +173,7 @@ jobs:
               PLATFORMS_JSON="$PLATFORMS_JSON
               \"darwin-aarch64\": {
                 \"signature\": \"$MACOS_SIGNATURE\",
-                \"url\": \"https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.branch }}/$DMG_FILENAME\"
+                \"url\": \"https://github.com/tachyon-gg/tachyon-releases/releases/download/${{ steps.extract_info.outputs.version }}-${{ steps.extract_info.outputs.branch }}/$DMG_FILENAME\"
               }"
               PLATFORM_COUNT=$((PLATFORM_COUNT + 1))
             fi
