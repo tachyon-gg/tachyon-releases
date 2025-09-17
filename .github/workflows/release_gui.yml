@@ -127,7 +127,7 @@ jobs:
           
           # Check Linux platform
           if [ -n "$DEB_FILE" ] && [ -f "$DEB_FILE" ]; then
-            DEB_FILENAME=$(basename "$DEB_FILE")
+            DEB_FILENAME=$(basename "$DEB_FILE" | tr ' ' '.')
             DEB_SIG_FILE="temp-signatures/$(basename "$DEB_FILE").sig"
             if [ -f "$DEB_SIG_FILE" ]; then
               LINUX_SIGNATURE=$(cat "$DEB_SIG_FILE")
@@ -145,7 +145,7 @@ jobs:
           
           # Check Windows platform
           if [ -n "$MSI_FILE" ] && [ -f "$MSI_FILE" ]; then
-            MSI_FILENAME=$(basename "$MSI_FILE")
+            MSI_FILENAME=$(basename "$MSI_FILE" | tr ' ' '.')
             MSI_SIG_FILE="temp-signatures/$(basename "$MSI_FILE").sig"
             if [ -f "$MSI_SIG_FILE" ]; then
               WINDOWS_SIGNATURE=$(cat "$MSI_SIG_FILE")
@@ -163,7 +163,7 @@ jobs:
           
           # Check macOS platform
           if [ -n "$DMG_FILE" ] && [ -f "$DMG_FILE" ]; then
-            DMG_FILENAME=$(basename "$DMG_FILE")
+            DMG_FILENAME=$(basename "$DMG_FILE" | tr ' ' '.')
             DMG_SIG_FILE="temp-signatures/$(basename "$DMG_FILE").sig"
             if [ -f "$DMG_SIG_FILE" ]; then
               MACOS_SIGNATURE=$(cat "$DMG_SIG_FILE")
