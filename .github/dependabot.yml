@@ -20,4 +20,4 @@ updates:
           - "minor"
           - "patch"
     commit-message:
-      prefix: "deps(actions)"
+      prefix: "chore(deps-actions)"
