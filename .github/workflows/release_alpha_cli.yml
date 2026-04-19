@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Find run for tag
         id: find_run
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.TACHYON_GG }}
           script: |
@@ -49,7 +49,7 @@ jobs:
             core.setOutput('run_id', String(foundRun.id));
 
       - name: Download CLI artifact (Ubuntu)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tachyon-cli-ubuntu-latest-alpha-${{ github.event.inputs.version }}
           path: ./artifact-ubuntu
@@ -58,7 +58,7 @@ jobs:
           github-token: ${{ secrets.TACHYON_GG }}
 
       - name: Download CLI artifact (macOS)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tachyon-cli-macos-latest-alpha-${{ github.event.inputs.version }}
           path: ./artifact-macos
@@ -67,7 +67,7 @@ jobs:
           github-token: ${{ secrets.TACHYON_GG }}
 
       - name: Download CLI artifact (Windows)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tachyon-cli-windows-latest-alpha-${{ github.event.inputs.version }}
           path: ./artifact-windows
@@ -89,7 +89,7 @@ jobs:
           find artifact-windows -type f -name "tachyon*" -exec cp {} release-artifacts/ \;
 
       - name: Release to public repo
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: alpha-${{ github.event.inputs.version }}
           name: Alpha v${{ github.event.inputs.version }}

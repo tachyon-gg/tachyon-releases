@@ -31,7 +31,7 @@ jobs:
 
       - name: Find run for tag
         id: find_run
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.TACHYON_GG }}
           script: |
@@ -63,7 +63,7 @@ jobs:
             core.setOutput('run_id', String(foundRun.id));
 
       - name: Download GUI artifact (Ubuntu)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tachyon-${{ github.event.inputs.tag }}-ubuntu-latest
           path: ./artifact-ubuntu
@@ -72,7 +72,7 @@ jobs:
           github-token: ${{ secrets.TACHYON_GG }}
 
       - name: Download GUI artifact (macOS)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tachyon-${{ github.event.inputs.tag }}-macos-latest
           path: ./artifact-macos
@@ -81,7 +81,7 @@ jobs:
           github-token: ${{ secrets.TACHYON_GG }}
 
       - name: Download GUI artifact (Windows)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tachyon-${{ github.event.inputs.tag }}-windows-latest
           path: ./artifact-windows
@@ -193,7 +193,7 @@ jobs:
           cat release-manifest/manifest.json
 
       - name: Release Build
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.extract_info.outputs.version }}${{ steps.extract_info.outputs.branch != 'prod' && format('-{0}', steps.extract_info.outputs.branch) || '' }}
           name: ${{ github.event.inputs.tag }}
